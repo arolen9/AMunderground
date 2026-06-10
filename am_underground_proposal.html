@@ -370,17 +370,6 @@
       <textarea id="scopeDesc" rows="5" placeholder="Describe all work to be performed, materials used, access requirements, etc."></textarea>
     </div>
 
-    <div style="margin-top: 20px;">
-      <div class="line-items-header">
-        <span>Description</span>
-        <span style="text-align:right">Qty</span>
-        <span style="text-align:right">Unit Price</span>
-        <span></span>
-      </div>
-      <div id="lineItems"></div>
-      <button class="btn-add-line" onclick="addLine()">+ Add Line Item</button>
-    </div>
-
     <div class="totals">
       <div class="total-row"><span>Subtotal</span><span id="subtotal">$0.00</span></div>
       <div class="total-row"><span>Tax (optional)</span>
@@ -396,22 +385,10 @@
   <div class="card">
     <div class="section-label">Payment</div>
     <div class="payment-grid">
-      <div class="field">
-        <label>Deposit Required</label>
-        <input type="text" id="deposit" placeholder="e.g. 50% upfront">
-      </div>
-      <div class="field">
-        <label>Balance Due</label>
-        <input type="text" id="balance" placeholder="e.g. Upon completion">
-      </div>
-      <div class="field">
-        <label>Accepted Methods</label>
-        <input type="text" id="payMethods" placeholder="Check, cash, Zelle…">
-      </div>
-    </div>
+  
     <div class="field" style="margin-top:14px">
-      <label>Additional Payment Notes</label>
-      <textarea id="payNotes" rows="2" placeholder="Any additional payment terms or conditions…"></textarea>
+      <label>Add Payment Notes</label>
+      <textarea id="payNotes" rows="2" placeholder="Any payment terms or conditions…"></textarea>
     </div>
   </div>
 
