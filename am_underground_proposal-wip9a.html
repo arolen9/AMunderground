@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A&M Underground — Proposal Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red:    #C8102E;
+    --sky:    #5BC4E5;
+    --navy:   #1A2744;
+    --ink:    #1C1C1E;
+    --muted:  #6B7280;
+    --line:   #E4E7EC;
+    --bg:     #F8F9FB;
+    --white:  #FFFFFF;
+    --field:  #FFFFFF;
+    --radius: 8px;
+    --shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+  @media (max-width: 520px) { body { padding-bottom: 90px; } }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  }
+  @media (max-width: 520px) {
+    header { padding: 14px 16px; gap: 12px; }
+    header h1 { font-size: 14px; }
+    header p { display: none; }
+    .logo-mark { width: 122px; }
+  }
+
+  .logo-mark {
+    display: block;
+    width: 156px;
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    color: var(--white);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  header p { color: rgba(255,255,255,.55); font-size: 13px; margin-top: 2px; }
+
+  /* ── Layout ── */
+  .shell {
+    max-width: 820px;
+    margin: 40px auto 0;
+    padding: 0 20px;
+  }
+  @media (max-width: 520px) { .shell { margin-top: 20px; padding: 0 12px; } }
+
+  /* ── Section card ── */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 520px) { .card { padding: 20px 16px; } }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ── Two-col grid ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ── Fields ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="number"],
+  textarea,
+  select {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
+    color: var(--ink);
+    background: var(--field);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--sky);
+    box-shadow: 0 0 0 3px rgba(91,196,229,.18);
+  }
+  textarea { resize: vertical; line-height: 1.6; min-height: 100px; }
+
+  /* ── Line items table ── */
+  .line-items-header {
+    display: grid;
+    grid-template-columns: 1fr 70px 90px 36px;
+    gap: 8px;
+    padding: 0 0 6px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .line-items-header span { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
+
+  .line-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 90px 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .line-row input { margin: 0; }
+  .line-row input[type="number"] { text-align: right; }
+
+  @media (max-width: 520px) {
+    .line-items-header { display: none; }
+    .line-row {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 10px;
+      gap: 6px;
+      position: relative;
+    }
+    .line-row > input:first-child { grid-column: 1 / -1; }
+    .line-row .btn-remove {
+      position: absolute;
+      top: 6px; right: 6px;
+    }
+  }
+
+  .btn-add-line {
+    background: none;
+    border: 1.5px dashed var(--line);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-add-line:hover { border-color: var(--sky); color: var(--navy); }
+
+  .btn-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #D1D5DB;
+    font-size: 22px;
+    line-height: 1;
+    padding: 8px;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-remove:hover { color: var(--red); }
+
+  /* ── Totals ── */
+  .totals {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .total-row { display: flex; gap: 24px; font-size: 14px; color: var(--muted); }
+  .total-row.grand { color: var(--ink); font-weight: 700; font-size: 17px; }
+  .total-row span:last-child { min-width: 100px; text-align: right; font-family: 'IBM Plex Mono', monospace; }
+
+  /* ── Payment ── */
+  .payment-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .payment-grid { grid-template-columns: 1fr; } }
+
+  /* ── Generate button ── */
+  .action-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 20px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .btn-generate {
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    padding: 16px 36px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(200,16,46,.30);
+    transition: background .15s, transform .1s, box-shadow .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .btn-generate:hover { background: #a80d26; box-shadow: 0 6px 20px rgba(200,16,46,.4); transform: translateY(-1px); }
+  .btn-generate:active { transform: translateY(0); background: #8f0b1f; }
+  .btn-generate svg { flex-shrink: 0; }
+
+  @media (max-width: 520px) {
+    .action-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg);
+      border-top: 1px solid var(--line);
+      padding: 12px 16px;
+      max-width: 100%;
+      margin: 0;
+      z-index: 10;
+      box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+    }
+    .btn-generate {
+      width: 100%;
+      font-size: 16px;
+      padding: 16px;
+      border-radius: 8px;
+    }
+  }
+
+  /* ── Notice ── */
+  .notice {
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #92400E;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo-mark" id="headerLogo" src="AMlogo.png">
+  <div>
+    <h1>Proposal Generator</h1>
+    <p>New Water Service Installation — A&M Underground LLC</p>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- Project Overview -->
+  <div class="card">
+    <div class="section-label">Project Overview</div>
+    <div class="grid-2">
+      <div class="field full">
+        <label>Project / Service Type</label>
+        <input type="text" id="projectType" value="New Water Service Installation" placeholder="e.g. New Water Service Installation">
+      </div>
+      <div class="field">
+        <label>Proposal Date</label>
+        <input type="date" id="proposalDate">
+      </div>
+      <div class="field">
+        <label>Valid For (days)</label>
+        <input type="text" id="validDays" value="30" placeholder="30">
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Info -->
+  <div class="card">
+    <div class="section-label">Client Information</div>
+    <div class="grid-2">
+      <div class="field full">
+        <label>Client Name / Company</label>
+        <input type="text" id="clientName" placeholder="Full name or business name">
+      </div>
+      <div class="field full">
+        <label>Service Address</label>
+        <input type="text" id="clientAddress" placeholder="Street address, city, state, ZIP">
+      </div>
+      <div class="field">
+        <label>Client Phone</label>
+        <input type="tel" id="clientPhone" placeholder="(000) 000-0000">
+      </div>
+      <div class="field">
+        <label>Client Email</label>
+        <input type="email" id="clientEmail" placeholder="client@example.com">
+      </div>
+    </div>
+  </div>
+
+  <!-- Scope of Work -->
+  <div class="card">
+    <div class="section-label">Scope of Work</div>
+    <div class="field">
+      <label>Detailed Description</label>
+      <textarea id="scopeDesc" rows="5" placeholder="Describe all work to be performed, materials used, access requirements, etc."></textarea>
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <div class="card">
+    <div class="section-label">Line Items</div>
+    <div class="line-items-header">
+      <span>Description</span>
+      <span>Qty</span>
+      <span>Unit Price</span>
+      <span></span>
+    </div>
+    <div id="lineItems"></div>
+    <button type="button" class="btn-add-line" onclick="addLine()">+ Add line item</button>
+    <div class="grid-2" style="margin-top:14px">
+      <div class="field">
+        <label>Tax Rate (%)</label>
+        <input type="number" id="taxRate" min="0" step="0.01" value="0" oninput="recalc()">
+      </div>
+      <div class="totals">
+        <div class="total-row"><span>Subtotal</span><span id="subtotal">$0.00</span></div>
+        <div class="total-row grand"><span>Total</span><span id="grandTotal">$0.00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Terms -->
+  <div class="card">
+    <div class="section-label">Payment</div>
+    <div class="payment-grid">
+      <div class="field">
+        <label>Deposit</label>
+        <input type="text" id="deposit" placeholder="e.g. 50% upfront">
+      </div>
+      <div class="field">
+        <label>Balance Due</label>
+        <input type="text" id="balance" placeholder="e.g. Due on completion">
+      </div>
+      <div class="field">
+        <label>Accepted Payment Methods</label>
+        <input type="text" id="payMethods" placeholder="Cash, check, card, etc.">
+      </div>
+      <div class="field full" style="margin-top:14px">
+        <label>Payment Notes</label>
+        <textarea id="payNotes" rows="2" placeholder="Any payment terms or conditions…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terms -->
+  <div class="card">
+    <div class="section-label">Terms &amp; Conditions</div>
+    <div class="field">
+      <label>Terms</label>
+      <textarea id="terms" rows="4">The pricing in this proposal is valid for 30 days. All of our workers will be insured and bonded. This bid is for the utility and installation of water service. If additional items are needed a second proposal will be written.</textarea>
+    </div>
+    <div class="notice" style="margin-top:12px">
+      * This quote does not include restoration or permit fees.
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- Generate button -->
+<div class="action-bar" style="margin-top:8px;">
+  <button class="btn-generate" onclick="generatePDF()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2L12 15M12 15L7 10M12 15L17 10"/>
+      <path d="M3 20h18"/>
+    </svg>
+    Generate Proposal
+  </button>
+</div>
+
+<script>
+// ── Set today's date ──
+document.getElementById('proposalDate').valueAsDate = new Date();
+
+// ── Line items ──
+let lineCount = 0;
+
+function addLine(desc = '', qty = 1, price = '') {
+  lineCount++;
+  const id = lineCount;
+  const div = document.createElement('div');
+  div.className = 'line-row';
+  div.id = `line-${id}`;
+  div.innerHTML = `
+    <input type="text" placeholder="Description" value="${desc}" oninput="recalc()">
+    <input type="number" min="0" step="1" value="${qty}" oninput="recalc()">
+    <input type="number" min="0" step="0.01" placeholder="0.00" value="${price}" oninput="recalc()">
+    <button class="btn-remove" onclick="removeLine(${id})" title="Remove">×</button>
+  `;
+  document.getElementById('lineItems').appendChild(div);
+  recalc();
+}
+
+function removeLine(id) {
+  const el = document.getElementById(`line-${id}`);
+  if (el) el.remove();
+  recalc();
+}
+
+function recalc() {
+  const rows = document.querySelectorAll('#lineItems .line-row');
+  let sub = 0;
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const qty = parseFloat(inputs[1].value) || 0;
+    const price = parseFloat(inputs[2].value) || 0;
+    sub += qty * price;
+  });
+  const tax = parseFloat(document.getElementById('taxRate').value) || 0;
+  const total = sub * (1 + tax / 100);
+  document.getElementById('subtotal').textContent = fmt(sub);
+  document.getElementById('grandTotal').textContent = fmt(total);
+}
+
+function fmt(n) {
+  return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Seed one blank line
+addLine();
+
+// ── PDF Generation ──
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: [612, 1080] });
+
+  const PW = 612, PH = 1080;
+  const ML = 56, MR = 56, MT = 56;
+  let y = MT;
+
+  // ── Helpers ──
+  const navy  = [26, 39, 68];
+  const red   = [200, 16, 46];
+  const sky   = [91, 196, 229];
+  const ink   = [28, 28, 30];
+  const muted = [107, 114, 128];
+  const lineC = [228, 231, 236];
+  const white = [255, 255, 255];
+
+  function setColor(rgb, fill = true) {
+    if (fill) doc.setFillColor(...rgb);
+    else doc.setDrawColor(...rgb);
+  }
+
+  function rule(yy, color = lineC) {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(0.5);
+    doc.line(ML, yy, PW - MR, yy);
+  }
+
+  function sectionLabel(text, yy) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...red);
+    doc.text(text.toUpperCase(), ML, yy);
+    const tw = doc.getTextWidth(text.toUpperCase());
+    rule(yy - 3, lineC);
+    // overwrite left portion with white so label sits on top
+    doc.setFillColor(...white);
+    doc.rect(ML - 2, yy - 10, tw + 8, 12, 'F');
+    doc.setTextColor(...red);
+    doc.text(text.toUpperCase(), ML, yy);
+    return yy + 14;
+  }
+
+  // ── HEADER band ──
+  setColor(navy); doc.rect(0, 0, PW, 80, 'F');
+
+  const headerLogoX = ML;
+  const headerLogoY = 8;
+  const headerLogoW = 78;
+  const headerLogoH = 55;
+  const headerTextX = 188;
+
+  // Logo image
+  const logoEl = document.getElementById('headerLogo');
+  if (logoEl && logoEl.complete && logoEl.naturalWidth > 0) {
+    try {
+      window.__pdfLogoMode = 'image';
+      //doc.addImage(logoEl, 'PNG', headerLogoX, headerLogoY, headerLogoW, headerLogoH);
+	  //doc.addImage(logoEl, 'PNG', headerLogoX, headerLogoY, headerLogoW, headerLogoH, undefined, 'FAST');
+	  // Add 'RGBA' at the end to force jsPDF to keep the transparency layer from the HTML element
+	  ///doc.addImage(logoEl, 'PNG', headerLogoX, headerLogoY, headerLogoW, headerLogoH, undefined, 'FAST', 0, 'RGBA');
+	  doc.addImage(logoEl, 'PNG', headerLogoX, headerLogoY, headerLogoW, headerLogoH);
+    } catch (error) {
+      window.__pdfLogoMode = 'fallback';
+      setColor(sky); doc.roundedRect(headerLogoX, headerLogoY, headerLogoW, headerLogoH, 6, 6, 'F');
+      setColor(red, false); doc.setLineWidth(2.5); doc.roundedRect(headerLogoX, headerLogoY, headerLogoW, headerLogoH, 6, 6, 'S');
+      doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...red);
+      doc.text('A&M', headerLogoX + headerLogoW / 2, 34, { align: 'center' });
+      doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+      doc.text('UNDERGROUND', headerLogoX + headerLogoW / 2, 47, { align: 'center' });
+    }
+  } else {
+    window.__pdfLogoMode = 'fallback';
+    setColor(sky); doc.roundedRect(headerLogoX, headerLogoY, headerLogoW, headerLogoH, 6, 6, 'F');
+    setColor(red, false); doc.setLineWidth(2.5); doc.roundedRect(headerLogoX, headerLogoY, headerLogoW, headerLogoH, 6, 6, 'S');
+    doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...red);
+    doc.text('A&M', headerLogoX + headerLogoW / 2, 34, { align: 'center' });
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+    doc.text('UNDERGROUND', headerLogoX + headerLogoW / 2, 47, { align: 'center' });
+  }
+
+  // Title
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(...white);
+  doc.text('PROPOSAL / CONTRACT', headerTextX, 27);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 200, 220);
+  doc.text('A&M Underground LLC  ·  Mike@amundergroundllc.com  ·  847-815-9691', headerTextX, 42);
+  doc.setFontSize(8); doc.setTextColor(160, 180, 200);
+  const pd = document.getElementById('proposalDate').value;
+  doc.text(`Date: ${pd}   ·   Valid for ${v('validDays')} days`, headerTextX, 55);
+
+  y = 104;
+
+  // ── PROJECT OVERVIEW ──
+  y = sectionLabel('Project Overview', y);
+  doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+  doc.text('The Client is seeking services for the following:', ML, y);
+  y += 14;
+  doc.setFont('helvetica', 'bold');
+  doc.text(v('projectType'), ML, y);
+  y += 22;
+
+  // CLIENT | CONTRACTOR columns
+  const colMid = PW / 2;
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...muted);
+  doc.text('CLIENT', ML, y);
+  doc.text('CONTRACTOR', colMid + 12, y);
+  doc.setDrawColor(...lineC); doc.setLineWidth(0.5); doc.line(colMid, y - 12, colMid, y + 40);
+  y += 12;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...ink);
+  const cName = v('clientName') || '________________________';
+  const cAddr = v('clientAddress') || '';
+  const cPhone = v('clientPhone') || '';
+  const cEmail = v('clientEmail') || '';
+  doc.text(cName, ML, y);
+  if (cAddr)  { y += 13; doc.text(cAddr,  ML, y); }
+  if (cPhone) { y += 13; doc.text(cPhone, ML, y); }
+  if (cEmail) { y += 13; doc.text(cEmail, ML, y); }
+  // Contractor (reset y for right column)
+  let yRight = y - (cAddr ? 13 : 0) - (cPhone ? 13 : 0) - (cEmail ? 13 : 0);
+  doc.setTextColor(...ink); doc.setFontSize(11);
+  doc.text('A&M Underground LLC', colMid + 12, yRight);
+  y += 28;
+
+  // ── EXPERIENCE & QUALIFICATIONS ──
+  y = sectionLabel('Experience & Qualifications', y);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+  const exp = 'A&M Underground brings 55 year combined quality and experience to the table. We look forward to creating a quality relationship for years to come.';
+  const expLines = doc.splitTextToSize(exp, PW - ML - MR);
+  doc.text(expLines, ML, y);
+  y += expLines.length * 14 + 18;
+
+  // ── SCOPE OF WORK ──
+  y = sectionLabel('Scope of Work', y);
+  const scope = v('scopeDesc');
+  if (scope) {
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+    const scopeLines = doc.splitTextToSize(scope, PW - ML - MR);
+    doc.text(scopeLines, ML, y);
+    y += scopeLines.length * 14 + 10;
+  }
+
+  // ── PAYMENT ──
+  y = sectionLabel('Payment', y);
+  const dep  = v('deposit');
+  const bal  = v('balance');
+  const meth = v('payMethods');
+  const pnotes = v('payNotes');
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+  if (dep)    { doc.setFont('helvetica', 'bold'); doc.text('Deposit:', ML, y); doc.setFont('helvetica','normal'); doc.text(dep, ML + 60, y); y += 14; }
+  if (bal)    { doc.setFont('helvetica', 'bold'); doc.text('Balance Due:', ML, y); doc.setFont('helvetica','normal'); doc.text(bal, ML + 80, y); y += 14; }
+  if (meth)   { doc.setFont('helvetica', 'bold'); doc.text('Accepted:', ML, y); doc.setFont('helvetica','normal'); doc.text(meth, ML + 60, y); y += 14; }
+  if (pnotes) { const pnLines = doc.splitTextToSize(pnotes, PW - ML - MR); doc.setFont('helvetica','normal'); doc.text(pnLines, ML, y); y += pnLines.length * 14; }
+  y += 10;
+
+  // Line items table
+  const rows = document.querySelectorAll('#lineItems .line-row');
+  if (rows.length > 0) {
+    const colW = [300, 50, 90, 90];
+    const colX = [ML, ML + colW[0], ML + colW[0] + colW[1], ML + colW[0] + colW[1] + colW[2]];
+    // Header
+    setColor([240, 243, 247]); doc.rect(ML, y, PW - ML - MR, 20, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...muted);
+    ['DESCRIPTION', 'QTY', 'UNIT PRICE', 'AMOUNT'].forEach((h, i) => {
+      doc.text(h, i === 0 ? colX[i] + 6 : colX[i] + colW[i] - 6, y + 13, { align: i === 0 ? 'left' : 'right' });
+    });
+    y += 20;
+    let sub = 0;
+    rows.forEach((row, ri) => {
+      const inputs = row.querySelectorAll('input');
+      const desc  = inputs[0].value || '';
+      const qty   = parseFloat(inputs[1].value) || 0;
+      const price = parseFloat(inputs[2].value) || 0;
+      const amt   = qty * price;
+      sub += amt;
+      if (ri % 2 === 1) { setColor([250,251,253]); doc.rect(ML, y, PW - ML - MR, 18, 'F'); }
+      doc.setFontSize(9.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+      doc.text(desc,        colX[0] + 6, y + 12);
+      doc.text(String(qty), colX[1] + colW[1] - 6, y + 12, { align: 'right' });
+      doc.text(fmt(price),  colX[2] + colW[2] - 6, y + 12, { align: 'right' });
+      doc.text(fmt(amt),    colX[3] + colW[3] - 6, y + 12, { align: 'right' });
+      y += 18;
+    });
+    rule(y, lineC); y += 10;
+    const tax = parseFloat(document.getElementById('taxRate').value) || 0;
+    const total = sub * (1 + tax / 100);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...muted);
+    doc.text('Subtotal', PW - MR - 120, y); doc.text(fmt(sub), PW - MR, y, { align: 'right' }); y += 14;
+    if (tax > 0) {
+      doc.text(`Tax (${tax}%)`, PW - MR - 120, y); doc.text(fmt(sub * tax / 100), PW - MR, y, { align: 'right' }); y += 14;
+    }
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+    doc.text('Total', PW - MR - 120, y); doc.text(fmt(total), PW - MR, y, { align: 'right' });
+    y += 24;
+  }
+
+  // ── TERMS ──
+  y += 12;
+  y = sectionLabel('Terms & Conditions', y);
+  const termsText = v('terms');
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+  const tLines = doc.splitTextToSize(termsText, PW - ML - MR);
+  doc.text(tLines, ML, y);
+  y += tLines.length * 14 + 18;
+
+  // Notice box
+  setColor([255, 247, 237]); doc.rect(ML, y, PW - ML - MR, 26, 'F');
+  doc.setDrawColor(254, 215, 170); doc.setLineWidth(0.5); doc.rect(ML, y, PW - ML - MR, 26, 'S');
+  doc.setFontSize(9); doc.setFont('helvetica', 'italic'); doc.setTextColor(146, 64, 14);
+  doc.text('* This quote does not include restoration or permit fees.', ML + 10, y + 16);
+  y += 40;
+
+  // ── SIGNATURES ──
+  y = sectionLabel('Next Step & Signatures', y);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...ink);
+  doc.text('To discuss your project further and formalize this agreement, please sign below.', ML, y);
+  y += 28;
+
+  // Client sig line
+  const sigW = 220;
+  doc.setDrawColor(...ink); doc.setLineWidth(0.5);
+  doc.line(ML, y + 20, ML + sigW, y + 20);
+  doc.line(ML + sigW + 30, y + 20, ML + sigW + 30 + 120, y + 20);
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...muted);
+  doc.text('Client Signature', ML, y + 30);
+  doc.text('Date', ML + sigW + 30, y + 30);
+  y += 52;
+
+  // Contractor block
+  setColor([245, 247, 250]); doc.roundedRect(ML, y, PW - ML - MR, 76, 4, 4, 'F');
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+  doc.text('A&M Underground, LLC', ML + 16, y + 18);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...ink);
+  doc.text('Mike Martinelli — Owner', ML + 16, y + 32);
+  doc.text('Mike@amundergroundllc.com   |   847-815-9691', ML + 16, y + 44);
+  doc.setTextColor(...muted);
+  doc.text('Anthony Sansardo — Owner', ML + 16, y + 58);
+  doc.text('Anthony@amundergroundllc.com   |   773-332-4622', ML + 16, y + 70);
+
+  // Footer
+  doc.setFontSize(7.5); doc.setTextColor(...muted);
+  doc.text('A&M Underground LLC  ·  amundergroundllc.com', PW / 2, PH - 28, { align: 'center' });
+  rule(PH - 36, lineC);
+
+  // ── Save — works on PC, Android, and iOS ──
+  // Strip all non-alphanumeric characters, spaces, and punctuation from client name
+  const clientName = v('clientName').replace(/[^a-zA-Z0-9]/g, '');
+  // Format the date as MMDDYY
+  const rawDate = document.getElementById('proposalDate').value; // Expected format: YYYY-MM-DD
+  let dateStamp = '';
+  if (rawDate) {
+    const [yr, mo, dy] = rawDate.split('-');
+    if (yr && mo && dy) {
+      dateStamp = `${mo}${dy}${yr.slice(-2)}`; // Takes last 2 digits of year
+    }
+  }
+
+  // Construct the final filename string
+  const nameParts = ['A&M_Proposal'];
+  if (clientName) nameParts.push(clientName);
+  if (dateStamp) nameParts.push(dateStamp);
+  const filename = `${nameParts.join('_')}.pdf`;
+
+  // Generate a native raw binary Blob instead of a data URI string
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+
+  const isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if (isIOS) {
+    // Redirect Safari to the raw Blob URL container
+    window.location.href = url;
+  } else {
+    // PC + Android fallback: Standard immediate download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  } else {
+    // PC + Android: standard download
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+}
+
+function v(id) {
+  return (document.getElementById(id)?.value || '').trim();
+}
+</script>
+</body>
+</html>
