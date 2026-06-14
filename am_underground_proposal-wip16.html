@@ -531,12 +531,12 @@ async function generatePDF() {
 
   // ── HEADER band ──
 // ── HEADER band ──
-setColor(navy); doc.rect(0, 0, PW, 135, 'F'); // Increased height to 135
+setColor(navy); doc.rect(0, 0, PW, 114, 'F'); // Increased height to 114
 
 const headerLogoX = ML;
 const headerLogoY = 16;  // Lowered to center vertically in the 135-high band
-const headerLogoW = 105; // 35% larger width
-const headerLogoH = 74;  // 35% larger height
+const headerLogoW = 110;
+const headerLogoH = 78;  // 35% larger height
 const headerTextX = 215; // Pushed right to avoid overlap
 
 // Logo image
@@ -578,7 +578,7 @@ doc.setFontSize(8); doc.setTextColor(160, 180, 200);
 const pd = document.getElementById('proposalDate').value;
 doc.text(`Date: ${pd}   ·   Valid for ${v('validDays')} days`, headerTextX, 97);
 
-y = 155; // Pushed down to clear the larger header band
+y = 145; // Pushed down to clear the larger header band
 
   // ── PROJECT OVERVIEW ──
   y = sectionLabel('Project Overview', y);
