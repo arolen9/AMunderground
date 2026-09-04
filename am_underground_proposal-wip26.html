@@ -794,15 +794,15 @@ async function generatePDF() {
   y += 52;
 
   // Contractor block
-  //setColor([245, 247, 250]); doc.roundedRect(ML, y, PW - ML - MR, 76, 4, 4, 'F');
-  //doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
-  //doc.text('A&M Underground, LLC', ML + 16, y + 18);
-  //doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...ink);
-  //doc.setTextColor(...muted);
-  //doc.text('Anthony Sansardo — Owner', ML + 16, y + 32);
-  //doc.text('Anthony@amundergroundllc.com   |   773-332-4622', ML + 16, y + 44);
-  //doc.text('Mike Martinelli — Owner', ML + 16, y + 58);
-  //doc.text('Mike@amundergroundllc.com   |   847-815-9691', ML + 16, y + 70);
+  setColor([245, 247, 250]); doc.roundedRect(ML, y, PW - ML - MR, 76, 4, 4, 'F');
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+  doc.text('A&M Underground, LLC', ML + 16, y + 18);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...ink);
+  doc.setTextColor(...muted);
+  doc.text('Anthony Sansardo — Owner', ML + 16, y + 32);
+  doc.text('Anthony@amundergroundllc.com   |   773-332-4622', ML + 16, y + 44);
+  doc.text('Mike Martinelli — Owner', ML + 16, y + 58);
+  doc.text('Mike@amundergroundllc.com   |   847-815-9691', ML + 16, y + 70);
 
   // Footer
   //doc.setFontSize(7.5); doc.setTextColor(...muted);
